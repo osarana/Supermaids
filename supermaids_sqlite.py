@@ -5,8 +5,6 @@ import pandas as pd
 conn = sqlite3.connect('cleaning_service.db')
 cursor = conn.cursor()
 
-# Execute
-
 # Create Employee Table
 cursor.execute('''
     CREATE TABLE Employee (
@@ -14,18 +12,18 @@ cursor.execute('''
         staffFName TEXT,
         staffLName TEXT,
         staffAddress TEXT,
-        staffSalary INTEGER,
-        staffTelNo TEXT UNIQUE NOT NULL
+        staffSalary INTEGER CHECK(staffSalary >= 0),
+        staffTelNo TEXT UNIQUE NOT NULL CHECK(staffTelNo LIKE '(___)___-____')
     )
 ''')
 
 # Insert tuples into the Employee table
 employee_data = [
-    (1, 'Oscar', 'Arana', '123 Main St', 100000, '954-1234'),
-    (2, 'Zubaer', 'Chowdhury', '123 Amaro Dr', 75000, '303-1234'),
-    (3, 'Justin', 'Prince', '500 Ponce De Leon Blvd', 75000, '219-1234'),
-    (4, 'John', 'Doe', '1300 Memorial Drive', 50000, '555-1234'), 
-    (5, 'Jane', 'Smith', '456 Elm St', 60000, '555-5678')
+    (1, 'Oscar', 'Arana', '123 Main St', 100000, '(954)644-3169'),
+    (2, 'Zubaer', 'Chowdhury', '123 Amaro Dr', 75000, '(303)534-1234'),
+    (3, 'Justin', 'Prince', '500 Ponce De Leon Blvd', 75000, '(123)219-1234'),
+    (4, 'John', 'Doe', '1300 Memorial Drive', 50000, '(786)555-1234'), 
+    (5, 'Jane', 'Smith', '456 Elm St', 60000, '(587)555-5678')
 ]
 
 cursor.executemany('''
@@ -40,17 +38,17 @@ cursor.execute('''
         clientFName TEXT,
         clientLName TEXT,
         clientAddress TEXT,
-        clientTelNo TEXT UNIQUE NOT NULL
+        clientTelNo TEXT UNIQUE NOT NULL CHECK(clientTelNo LIKE '(___)___-____')
     )
 ''')
 
 # Insert tuples into the Client table
 client_data = [
-    (1, 'Carol', 'Clark', '333 Maple St', '555-1111'),
-    (2, 'David', 'Lee', '777 Birch St', '555-2222'),
-    (3, 'Frank', 'Garcia', '888 Walnut St', '555-3333'),
-    (4, 'Grace', 'Martinez', '999 Cherry St', '555-4444'),
-    (5, 'Henry', 'Nguyen', '222 Chestnut St', '555-5555')
+    (1, 'Carol', 'Clark', '333 Maple St', '(123)555-1111'),
+    (2, 'David', 'Lee', '777 Birch St', '(456)555-2222'),
+    (3, 'Frank', 'Garcia', '888 Walnut St', '(252)555-3333'),
+    (4, 'Grace', 'Martinez', '999 Cherry St', '(985)555-4444'),
+    (5, 'Henry', 'Nguyen', '222 Chestnut St', '(786)555-5555')
 ]
 
 cursor.executemany('''
@@ -58,13 +56,13 @@ cursor.executemany('''
     VALUES (?, ?, ?, ?, ?)
 ''', client_data)
 
-# Create Request Table
+# Create Request Table (HAVE ZUBAER CHECK TO SEE IF WE NEED CONSTRAINT ON STARTTIME)
 cursor.execute('''
     CREATE TABLE Request (
         requestID INTEGER PRIMARY KEY,
-        startDate TEXT,
-        startTime TEXT,
-        duration INTEGER,
+        startDate DATE NOT NULL CHECK (startDate >= '2023-12-07'),
+        startTime TEXT CHECK(TIME(startTime) >= '09:00:00'),
+        duration INTEGER NOT NULL CHECK(duration > 0),
         comments TEXT,
         clientNo INTEGER,
         FOREIGN KEY(clientNo) REFERENCES Client(clientNo) ON UPDATE CASCADE ON DELETE CASCADE
@@ -73,11 +71,11 @@ cursor.execute('''
 
 # Insert tuples into the Request table
 request_data = [
-    (1, '2023-01-15', '08:00:00', 2, 'Need cleaning service', 1),
-    (2, '2023-02-20', '10:30:00', 3, 'Deep cleaning required', 2),
-    (3, '2023-03-10', '09:45:00', 1, 'Regular cleaning', 3),
-    (4, '2023-04-05', '12:00:00', 4, 'Urgent cleaning needed', 4),
-    (5, '2023-05-18', '14:15:00', 2, 'Specialized cleaning requested', 5)
+    (1, '2023-12-15', '10:00:00', 2, 'Need cleaning service', 1),
+    (2, '2023-12-20', '15:30:00', 3, 'Deep cleaning required', 2),
+    (3, '2023-12-10', '12:45:00', 1, 'Regular cleaning', 3),
+    (4, '2023-12-09', '10:00:00', 4, 'Urgent cleaning needed', 4),
+    (5, '2023-12-18', '11:15:00', 2, 'Specialized cleaning requested', 5)
 ]
 
 cursor.executemany('''
@@ -91,7 +89,7 @@ cursor.execute('''
         equipmentID INTEGER PRIMARY KEY,
         description TEXT,
         usage TEXT,
-        cost INTEGER
+        cost INTEGER CHECK(cost >= 0)
     )
 ''')
 
@@ -161,6 +159,23 @@ cursor.executemany('''
 
 # Queries
 queries = [
+    "SELECT E.staffFName, E.staffLName, R.requestID, R.startDate, R.startTime, R.duration, R.comments "
+    "FROM Employee E "
+    "JOIN EmployeeRequestAssignment ERA ON E.staffNo = ERA.staffNo "
+    "JOIN Request R on ERA.requestID = R.requestID;",
+    "DELETE FROM Employee "
+    "WHERE staffNo = 4;",
+    "UPDATE EmployeeRequestAssignment "
+    "SET staffNo = 2 "
+    "WHERE requestID = 4;",
+    "SELECT E.staffFName, E.staffLName, R.requestID, R.startDate, R.startTime, R.duration, R.comments "
+    "FROM Employee E "
+    "JOIN EmployeeRequestAssignment ERA ON E.staffNo = ERA.staffNo "
+    "JOIN Request R on ERA.requestID = R.requestID;"
+]
+
+"""
+queries = [
     "SELECT staffFName, staffLName FROM Employee;",
     "SELECT clientFName, clientLName, clientAddress FROM Client;",
     "SELECT Request.requestID, Request.startDate, Request.startTime, Request.duration, Request.comments, Client.clientFName, Client.clientLName "
@@ -170,10 +185,12 @@ queries = [
     "SELECT Employee.staffFName, Employee.staffLName, EmployeeRequestAssignment.assignmentDate "
     "FROM EmployeeRequestAssignment INNER JOIN Employee ON EmployeeRequestAssignment.staffNo = Employee.staffNo;"
 ]
+"""
+
 
 # Execute and print queries
 for index, query in enumerate(queries, 1):
-    print(f"Query {index}: {query}")
+    print(f"Query {index}: {query}") 
     cursor.execute(query)
     result = cursor.fetchall()
     print(f"Results {index}:")
