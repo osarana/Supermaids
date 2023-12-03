@@ -137,7 +137,7 @@ cursor.execute('''
     CREATE TABLE EmployeeRequestAssignment (
         staffNo INTEGER,
         requestID INTEGER,
-        assignmentDate TEXT,
+        assignmentDate DATE NOT NULL CHECK (assignmentDate >= '2023-12-07'),
         FOREIGN KEY(staffNo) REFERENCES Employee(staffNo) ON UPDATE CASCADE ON DELETE SET NULL,
         FOREIGN KEY(requestID) REFERENCES Request(requestID) ON UPDATE CASCADE ON DELETE CASCADE
     )
@@ -145,11 +145,11 @@ cursor.execute('''
 
 # Insert tuples into the EmployeeRequestAssignment table
 employee_request_data = [
-    (1, 1, '2023-01-10'),
-    (2, 2, '2023-02-15'),
-    (3, 3, '2023-03-05'),
-    (4, 4, '2023-04-01'),
-    (5, 5, '2023-05-10')
+    (1, 1, '2023-12-12'),
+    (2, 2, '2023-12-15'),
+    (3, 3, '2023-12-25'),
+    (4, 4, '2023-12-21'),
+    (5, 5, '2023-12-20')
 ]
 
 cursor.executemany('''
@@ -158,23 +158,7 @@ cursor.executemany('''
 ''', employee_request_data)
 
 # Queries
-queries = [
-    "SELECT E.staffFName, E.staffLName, R.requestID, R.startDate, R.startTime, R.duration, R.comments "
-    "FROM Employee E "
-    "JOIN EmployeeRequestAssignment ERA ON E.staffNo = ERA.staffNo "
-    "JOIN Request R on ERA.requestID = R.requestID;",
-    "DELETE FROM Employee "
-    "WHERE staffNo = 4;",
-    "UPDATE EmployeeRequestAssignment "
-    "SET staffNo = 2 "
-    "WHERE requestID = 4;",
-    "SELECT E.staffFName, E.staffLName, R.requestID, R.startDate, R.startTime, R.duration, R.comments "
-    "FROM Employee E "
-    "JOIN EmployeeRequestAssignment ERA ON E.staffNo = ERA.staffNo "
-    "JOIN Request R on ERA.requestID = R.requestID;"
-]
 
-"""
 queries = [
     "SELECT staffFName, staffLName FROM Employee;",
     "SELECT clientFName, clientLName, clientAddress FROM Client;",
@@ -185,7 +169,7 @@ queries = [
     "SELECT Employee.staffFName, Employee.staffLName, EmployeeRequestAssignment.assignmentDate "
     "FROM EmployeeRequestAssignment INNER JOIN Employee ON EmployeeRequestAssignment.staffNo = Employee.staffNo;"
 ]
-"""
+
 
 
 # Execute and print queries
